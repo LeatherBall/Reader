@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" style="font-size: 23px;">
+<head>
+    <title>Reader</title>
+    <meta charset="UTF-8">
+    <style>
+        * {padding: 0;margin: 0}
+        html, body {height: 100%;overflow: hidden;}
+        body {position: relative; overflow-x: hidden; background: #222;margin: 0 .5em;}
+        pre {position: absolute;top: 0;left: 0;width: 100%;height: calc(100% - 3em - 1px);font-size: 1em; overflow-y: auto; color: #c1c1c1;word-wrap: break-word;white-space: pre-wrap;font-family: inherit;}
+        .footer {position: absolute; left: 0;bottom: 0; width: 100%;display: flex; font-weight: bold;justify-content: space-between;border-top: 1px solid #ffaa44; color: #ffaa44; font-size: 2em;padding: .5em 0; box-sizing: border-box;background: #222;}
+        .footer div {text-align: center; width: 100%;height: 2em;line-height: 2em;}
+        .footer div + div {border-left: 1px solid #ffaa44;}
+        .import {position: absolute;width: 100%;top: 50%;left: 0;text-align: center;overflow: hidden;font-size: 1.5em;color: #ffaa44;text-decoration: underline;}
+        .import input {opacity: 0;position: absolute;top: 0;left: 0;width: 100%;height: 100%;}
+        .cover {position: absolute; top: 0;left: 0;width: 100%;height: 100%; color: #ffaa44;font-size: 1.5em;text-align: center;padding-top: 50%;box-sizing: border-box;z-index: 99;}
+    </style>
+    <script>
+        const Reader = {
+            key: null,
+            bookName: ''
+        };
+
+        function bookmark() {
+            if (!Reader.bookName) {
+                alert('Please import books first.');
+                return;
+            }
+            const already = bookWrapper.scrollTop;
+            window.localStorage.setItem(Reader.key + Reader.bookName, already.toString());
+            alert('save success!');
+        }
+
+        function prevPage() {
+            if (!Reader.bookName) {
+                alert('Please import books first.');
+                return;
+            }
+            bookWrapper.scrollTop -= bookWrapper.clientHeight;
+        }
+
+        function nextPage() {
+            if (!Reader.bookName) {
+                alert('Please import books first.');
+                return;
+            }
+            bookWrapper.scrollTop += bookWrapper.clientHeight;
+        }
+
+        window.onload = function () {
+            window.bookWrapper = document.getElementById('bookWrapper');
+            Reader.key = '__rbm_';
+            Reader.bookName = '';
+
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowLeft':
+                        bookWrapper.scrollTop -= bookWrapper.clientHeight;
+                        break;
+                    case 'ArrowRight':
+                        bookWrapper.scrollTop += bookWrapper.clientHeight;
+                        break;
+                }
+            });
+
+            let wrapper = document.getElementById('import');
+            let cover = document.getElementById('cover');
+            let footer = document.getElementById('footer');
+            let ele = document.getElementById('ibook');
+            wrapper.style.display = 'block';
+            ele.addEventListener('change', (e) => {
+                wrapper.style.display = 'none';
+                cover.style.display = 'block';
+                let book = ele.files[0];
+                Reader.bookName = book.name.split(".")[0];
+                let reader = new FileReader();
+                reader.readAsText(book, 'UTF-8');
+                reader.onload = function () {
+                    bookWrapper.innerText = this.result.toString();
+                    setTimeout(() => {
+                        let lastRecord = window.localStorage.getItem(Reader.key + Reader.bookName);
+                        if (lastRecord) {
+                            bookWrapper.scrollTop += Number.parseInt(lastRecord);
+                        }
+                        cover.style.display = 'none';
+                        footer.style.display = 'flex';
+                    }, 100);
+                };
+            });
+        }
+    </script>
+</head>
+<body>
+<pre id="bookWrapper">
+
+</pre>
+<div id="footer" class="footer" style="display: none;">
+    <div onclick="prevPage();"><</div>
+    <div onclick="bookmark();">SAVE</div>
+    <div onclick="nextPage();">></div>
+</div>
+<div id="import" class="import" style="display: none;">
+    <input id="ibook" type="file" accept="text/plain">
+    导入书籍
+</div>
+<div id="cover" class="cover" style="display: none;">请稍后...</div>
+</body>
+</html>
