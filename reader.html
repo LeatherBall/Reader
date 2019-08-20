@@ -3,106 +3,422 @@
 <head>
     <title>Reader</title>
     <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
+    <link rel="stylesheet" type="text/css" href="http://at.alicdn.com/t/font_1354421_f4owo6mjgwf.css">
     <style>
         * {padding: 0;margin: 0}
         html, body {height: 100%;overflow: hidden;}
-        body {position: relative; overflow-x: hidden; background: #222;margin: 0 .5em;}
-        pre {position: absolute;top: 0;left: 0;width: 100%;height: calc(100% - 3em - 1px);font-size: 1em; overflow-y: auto; color: #c1c1c1;word-wrap: break-word;white-space: pre-wrap;font-family: inherit;}
-        .footer {position: absolute; left: 0;bottom: 0; width: 100%;display: flex; font-weight: bold;justify-content: space-between;border-top: 1px solid #ffaa44; color: #ffaa44; font-size: 2em;padding: .5em 0; box-sizing: border-box;background: #222;}
-        .footer div {text-align: center; width: 100%;height: 2em;line-height: 2em;}
-        .footer div + div {border-left: 1px solid #ffaa44;}
-        .import {position: absolute;width: 100%;top: 50%;left: 0;text-align: center;overflow: hidden;font-size: 1.5em;color: #ffaa44;text-decoration: underline;}
+        body {position: relative; overflow-x: hidden; }
+        .header {position: absolute;top: 0;left: 0;width: 100%;height: 2em;background: linear-gradient(45deg, #e5f1ff, #ecfffc);display: none;justify-content: space-between;box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);z-index: 2;}
+        .header a { width: 2em; height: 2em; line-height: 2em; text-align: center;}
+        .header a i { font-size: 1em; color: #964600;}
+        .header.show {display: flex; animation: head-slide 0.5s}
+        .header > p { font-size: 0.9em; line-height: 2em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: calc(100% - 4em);text-align: center;}
+        pre {position: absolute;top: 0;left: 0;width: 100%;height: 100%;font-size: 0.7em;overflow-y: auto;background: #ffffff;color: #222222;word-wrap: break-word;white-space: pre-wrap;font-family: Microsoft Yahei;line-height: 1.5;padding: 0 0.2em;box-sizing: border-box;}
+        pre::-webkit-scrollbar {display: none;}
         .import input {opacity: 0;position: absolute;top: 0;left: 0;width: 100%;height: 100%;}
-        .cover {position: absolute; top: 0;left: 0;width: 100%;height: 100%; color: #ffaa44;font-size: 1.5em;text-align: center;padding-top: 50%;box-sizing: border-box;z-index: 99;}
+        .footer {position: absolute;bottom: 0;left: 0;width: 100%;background: linear-gradient(45deg, #e5f1ff, #ecfffc);padding: 0.5em;box-sizing: border-box;box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);display: none;}
+        .footer .item { display: flex; align-items: center; margin-bottom: 0.4em; }
+        .footer .item .ir {font-size: 0.7rem;color: #964600;width: 15%;text-align: right;}
+        .footer .item .ir a {font-size: 0.6em;display: block;}
+        .footer .item .ib {width: 70%;}
+        .footer .item .il {color: #964600;font-size: 0.7em;width: 15%;}
+        .footer .item .process { position: relative; width: 100%; height: 0.15em; background: rgba(158, 96, 0, 0.42); border-radius: 0.4em; }
+        .footer .item .process i { position: absolute; top: 0; left: 0; height: 100%; background: #9e6000; width: 0;}
+        .footer .item .process a { position: absolute; width: 0.9em; height: 0.9em; background: #ffe2bd; border-radius: 1em; top: -0.375em; left: -0.45em }
+        .footer .item .back-set i { display: inline-block; width: 1.2em; height: 1.2em; border-radius: 100%; vertical-align: middle; margin: 0 0.2em; }
+        .footer .item .back-set i:nth-child(1) {background: #ffffff;}
+        .footer .item .back-set i:nth-child(2) {background: #27272b;}
+        .footer .item .back-set i:nth-child(3) {background: #CCE8CF;}
+        .footer .item .back-set i:nth-child(4) {background: #ffe7e7;}
+        .footer .item .back-set i.check {width: calc(1.2em - 4px); height: calc(1.2em - 4px); border: 2px solid #964600;}
+        .footer.show {display: block; animation: foot-slide 0.5s;}
+        .toast { position: absolute; top: calc(50% - 2.5em); left: calc(50% - 2.5em); width: 5em; height: 5em; background: #ffffff; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);text-align: center; z-index: 100;}
+        .toast p {font-size: 0.6em;text-align: center;padding-top: 0.2em;color: #848484;}
+        .toast i {display: block;font-size: 2.2em;margin-top: 0.4em;}
+        .toast.success {color: #49c100;}
+        .toast.error {color: #ce0505;}
+        .import-cover {position: absolute;top: 0;left: 0;height: 100%;width: 100%;z-index: 2;background: linear-gradient(45deg, #e5f1ff, #ecfffc);}
+        .import-cover .import { position: absolute; bottom: 2%; left: 50%; text-align: center; overflow: hidden; font-size: 0.7em; color: #d67800; transform: translateX(-50%); }
+        .import-cover .import i { margin-right: 0.2em; }
+        h1 { padding: 1em 0; text-align: center; color: #ff5400;}
+        .letter {animation: bounce 0.75s cubic-bezier(0.05, 0, 0.2, 1) 2 alternate;display: inline-block;transform: translate3d(0, 0, 0);margin-top: 0.5em;text-shadow: rgba(195, 117, 24, 0.56) 0 0 0.05em;font-size: 3em;font-weight: bold;color: #cc5a08;}
+        .letter:nth-child(1) { animation-delay: 0s;}
+        .letter:nth-child(2) { animation-delay: 0.0833333333s;}
+        .letter:nth-child(3) { animation-delay: 0.1666666667s;}
+        .letter:nth-child(4) { animation-delay: 0.25s;}
+        .letter:nth-child(5) { animation-delay: 0.3333333333s;}
+        .letter:nth-child(6) { animation-delay: 0.4166666667s;}
+        .letter:nth-child(7) { animation-delay: 0.4999999996s;}
+        .letter:nth-child(8) { animation-delay: 0.583329s;}
+        .letter:nth-child(9) { animation-delay: 0.6222222223s;}
+        .letter:nth-child(10) { animation-delay: 0.7499953s;}
+        .logo { text-align: center; margin-top: 1em;}
+        .tips-cover {position: absolute;top: 0;left: 0;width: 100%;height: 100%;z-index: 99; background: rgba(0, 0, 0, 0.4);display: none;}
+        .tips-cover div {font-size: 0.7em;color: #eaeaea;text-align: center;}
+        .tips-cover div:nth-child(1), .tips-cover div:nth-child(3) {height: calc(50% - 50px);}
+        .tips-cover div:nth-child(2) {height: 98px;border-top: 1px dashed #b5b5b5;border-bottom: 1px dashed #b5b5b5;}
+        .tips-cover div span {display: inline-block;height: 100%;}
+        .tips-cover div span::before {content: ''; display: inline-block; height: 100%; vertical-align: middle;}
+        .wait-loading .icon {display: inline-block; color: #ff9815; animation: loading 1s linear infinite;}
+        @keyframes head-slide {
+            from {transform: translateY(-100%)}
+            to {transform: translateY(0)}
+        }
+        @keyframes foot-slide {
+            from {transform: translateY(100%)}
+            to {transform: translateY(0)}
+        }
+        @keyframes loading {
+            0% {transform: rotate(0deg);}
+            100% {transform: rotate(359deg)}
+        }
+        @keyframes bounce {
+            0% { transform: translate3d(0, 0, 0); text-shadow: rgba(195, 117, 24, 0.56) 0 0 0.05em; color: #c18255}
+            100% {transform: translate3d(0, -1em, 0);text-shadow: rgba(195, 117, 24, 0.56) 0 1em 0.35em;color: #cc5a08;}
+        }
     </style>
     <script>
+        const [TIPS, THEME, RECORD] = ['Tips_LS_Reader', 'Theme_LS_Reader', 'Record_LS_Reader'];
         const Reader = {
-            key: null,
-            bookName: ''
+            bookId: null,
+            bookName: null,
+            wrapper: null,
+            theme: {
+                Dark: {background_color: '#27272b', font_color: '#c1c1c1'},
+                Light: {background_color: '#ffffff', font_color: '#222222'},
+                EyeCare: {background_color: '#CCE8CF', font_color: '#333333'},
+                Pink: {background_color: '#ffe7e7', font_color: '#501a00'}
+            }
         };
 
-        function bookmark() {
-            if (!Reader.bookName) {
-                alert('Please import books first.');
-                return;
+        function hasClass(element, className) {
+            let curClass = element.getAttribute('class');
+            return curClass.includes(className);
+        }
+
+        function addClass(element, className) {
+            let preClass = element.getAttribute('class');
+            if (preClass) {
+                preClass = preClass.trim();
+                if (!preClass.includes(className)) {
+                    element.setAttribute('class', preClass + ' ' + className);
+                }
+            } else {
+                element.setAttribute('class', className);
             }
-            const already = bookWrapper.scrollTop;
-            window.localStorage.setItem(Reader.key + Reader.bookName, already.toString());
-            alert('save success!');
+        }
+
+        function removeClass(element, className) {
+            let preClass = element.getAttribute('class');
+            if (preClass && preClass.includes(className)) {
+                element.setAttribute('class', preClass.replace(className, ''));
+            }
+        }
+
+        function siblings(element) {
+            const sibs = element.parentNode.children;
+            const newArr = [];
+            Array.from(sibs).forEach((ele, index) => {
+                if (ele != element) {
+                    newArr.push(ele);
+                }
+            });
+            return newArr;
+        }
+
+        function show(element) {
+            element.style.display = 'block';
+        }
+
+        function hide(element) {
+            element.style.display = 'none';
+        }
+
+        function toast(text, result) {
+            const panel = document.createElement('div');
+            const ending = result ? 'success' : 'error';
+            addClass(panel, 'toast');
+            addClass(panel, ending);
+            panel.innerHTML = `<i class="icon icon-${ending}"></i><p>${text}</p>`;
+            document.body.appendChild(panel);
+            setTimeout(() => {
+                document.body.removeChild(panel);
+            }, 1000);
+        }
+
+        function openLoading(title = '请稍后...') {
+            const panel = document.createElement('div');
+            addClass(panel, 'toast');
+            addClass(panel, 'wait-loading');
+            panel.innerHTML = `<i class="icon icon-loading"></i><p>${title}</p>`;
+            document.body.appendChild(panel);
+        }
+
+        function closeLoading() {
+            const loading = document.body.querySelector('.wait-loading');
+            if (loading) {
+                document.body.removeChild(loading);
+            }
         }
 
         function prevPage() {
-            if (!Reader.bookName) {
-                alert('Please import books first.');
-                return;
+            if (Reader.bookId) {
+                Reader.wrapper.scrollTop -= Reader.wrapper.clientHeight;
             }
-            bookWrapper.scrollTop -= bookWrapper.clientHeight;
+            removeClass(document.getElementById('header'), 'show');
+            removeClass(document.getElementById('footer'), 'show');
         }
 
         function nextPage() {
-            if (!Reader.bookName) {
-                alert('Please import books first.');
+            if (Reader.bookId) {
+                Reader.wrapper.scrollTop += Reader.wrapper.clientHeight;
+            }
+            removeClass(document.getElementById('header'), 'show');
+            removeClass(document.getElementById('footer'), 'show');
+        }
+
+        function setReadingRecord(onsuccess, onerror) {
+            let [read, bookId] = [Reader.wrapper.scrollTop, Reader.bookId];
+            if (bookId) {
+                let record = JSON.parse(window.localStorage.getItem(RECORD)) || {};
+                let flag;
+                for (let key in record) {
+                    if (Object.is(bookId, key)) {
+                        record[key] = read.toString();
+                        flag = true;
+                        break;
+                    }
+                }
+                if (!flag) {
+                    record[bookId] = read.toString();
+                }
+                window.localStorage.setItem(RECORD, JSON.stringify(record));
+                onsuccess && onsuccess();
+            } else {
+                onerror && onerror();
+            }
+        }
+
+        function getReadingRecord() {
+            const bookId = Reader.bookId;
+            if (!bookId) {
                 return;
             }
-            bookWrapper.scrollTop += bookWrapper.clientHeight;
+            const record = JSON.parse(window.localStorage.getItem(RECORD)) || {};
+            let scroll = 0;
+            for (let key in record) {
+                if (Object.is(bookId, key)) {
+                    scroll = Number.parseInt(record[key]);
+                    break;
+                }
+            }
+            return scroll;
+        }
+
+        function loadProcess(process, scrollTop) {
+            if (!scrollTop) {
+                scrollTop = Reader.wrapper.scrollHeight * process / 100;
+            }
+            Reader.wrapper.scrollTop = scrollTop;
+            document.getElementById('processText').innerText = `${process}%`;
+            document.getElementById('processBtn').style.left = `calc(${process}% - 0.45em)`;
+            document.getElementById('processBar').style.width = `${process}%`;
+        }
+
+        function setTheme(theme) {
+            const ele = document.querySelector(`[theme=${theme}]`);
+            addClass(ele, 'check');
+            const sibs = siblings(ele);
+            sibs.forEach((sib) => {
+                removeClass(sib, 'check');
+            });
+            const Theme = Reader.theme[theme];
+            Reader.wrapper.style.background = Theme.background_color;
+            Reader.wrapper.style.color = Theme.font_color;
+            window.localStorage.setItem(THEME, theme);
         }
 
         window.onload = function () {
-            window.bookWrapper = document.getElementById('bookWrapper');
-            Reader.key = '__rbm_';
-            Reader.bookName = '';
-
-            document.addEventListener('keydown', (e) => {
-                switch (e.key) {
-                    case 'ArrowLeft':
-                        bookWrapper.scrollTop -= bookWrapper.clientHeight;
-                        break;
-                    case 'ArrowRight':
-                        bookWrapper.scrollTop += bookWrapper.clientHeight;
-                        break;
+            Reader.wrapper = document.getElementById('bookWrapper');
+            const importCover = document.querySelector('.import-cover');
+            const importBook = document.getElementById('ibook');
+            const header = document.getElementById('header');
+            const footer = document.getElementById('footer');
+            let innerWidth, startX;
+            importBook.addEventListener('change', (e) => {
+                if (importBook.files.length === 0 || !importBook.files[0]) {
+                    return;
                 }
-            });
-
-            let wrapper = document.getElementById('import');
-            let cover = document.getElementById('cover');
-            let footer = document.getElementById('footer');
-            let ele = document.getElementById('ibook');
-            wrapper.style.display = 'block';
-            ele.addEventListener('change', (e) => {
-                wrapper.style.display = 'none';
-                cover.style.display = 'block';
-                let book = ele.files[0];
-                Reader.bookName = book.name.split(".")[0];
+                openLoading('正在打开...');
+                let book = importBook.files[0];
+                const bookCode = book.name.replace(/\./g, '').replace('txt', '');
+                Reader.bookId = escape(bookCode);
+                Reader.bookName = book.name.replace('.txt', '');
                 let reader = new FileReader();
                 reader.readAsText(book, 'UTF-8');
                 reader.onload = function () {
-                    bookWrapper.innerText = this.result.toString();
+                    Reader.wrapper.innerText = this.result.toString();
+                    // 恢复阅读记录
                     setTimeout(() => {
-                        let lastRecord = window.localStorage.getItem(Reader.key + Reader.bookName);
+                        let lastRecord = getReadingRecord();
                         if (lastRecord) {
-                            bookWrapper.scrollTop += Number.parseInt(lastRecord);
+                            const recordProcess = Math.ceil(lastRecord / Reader.wrapper.scrollHeight * 100);
+                            loadProcess(recordProcess, lastRecord);
                         }
-                        cover.style.display = 'none';
-                        footer.style.display = 'flex';
+                        hide(importCover);
+                        closeLoading();
                     }, 100);
+                    // 恢复记忆设置
+                    const theme = window.localStorage.getItem(THEME);
+                    theme && setTheme(theme);
+                    // 操作提示
+                    const tips = document.querySelector('.tips-cover');
+                    if (!window.localStorage.getItem(TIPS)) {
+                        tips.addEventListener('click', (e) => {
+                            hide(tips);
+                            window.localStorage.setItem(TIPS, '1');
+                        });
+                        show(tips);
+                    }
+                    document.getElementById('bookName').innerText = Reader.bookName;
                 };
             });
-        }
+
+            Reader.wrapper.addEventListener('click', function (e) {
+                if (!Reader.bookId) {
+                    return false;
+                }
+                let [y, height] = [e.clientY, this.clientHeight / 2];
+                if (y >= height + 50) {
+                    nextPage();
+                    setReadingRecord();
+                } else if (y <= height - 50) {
+                    prevPage();
+                    setReadingRecord();
+                } else {
+                    if (!hasClass(header, 'show')) {
+                        addClass(header, 'show');
+                        addClass(footer, 'show');
+                        if (!innerWidth) {
+                            startX = document.getElementById('process').children[0].clientWidth + 11.5;
+                            innerWidth = document.getElementById('process').children[1].clientWidth + 10.35;
+                        }
+                    } else {
+                        removeClass(header, 'show');
+                        removeClass(footer, 'show');
+                    }
+                }
+            });
+
+            document.getElementById('close').addEventListener('click', (e) => {
+                openLoading();
+                setReadingRecord();
+                show(importCover);
+                Reader.bookName = null;
+                Reader.bookId = null;
+                Reader.wrapper.innerText = '';
+                document.getElementById('bookName').innerText = '';
+                removeClass(header, 'show');
+                removeClass(footer, 'show');
+                closeLoading();
+            });
+
+            document.getElementById('save').addEventListener('click', (e) => {
+                setReadingRecord(function () {
+                    toast('记录已保存', 1);
+                }, function () {
+                    toast('先导入图书哦', 0);
+                });
+            });
+
+            // 推拽进度
+            document.getElementById('processBtn').addEventListener('touchmove', (e) => {
+                let x = e.touches[0].pageX - startX;
+                if (x < -10.35) {
+                    x = 0;
+                } else if (x > innerWidth) {
+                    x = innerWidth;
+                }
+                loadProcess(Math.ceil(x / innerWidth * 100));
+            });
+
+            // 设置背景
+            const backItems = document.getElementById('setback').getElementsByTagName('i');
+            Array.from(backItems).forEach((ele, index) => {
+                ele.addEventListener('click', (e) => {
+                    setTheme(e.target.getAttribute('theme'));
+                });
+            });
+        };
+
+        // window.onbeforeunload = function (e) {
+        //     if (Reader.wrapper.scrollTop !== getReadingRecord()) {
+        //         e.returnValue = '亲，阅读记录保存了吗~';
+        //     }
+        // };
+
+        document.addEventListener('keydown', (e) => {
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'ArrowLeft':
+                    prevPage();
+                    break;
+                case 'ArrowDown':
+                case 'ArrowRight':
+                    nextPage();
+                    break;
+            }
+        });
     </script>
 </head>
 <body>
-<pre id="bookWrapper">
-
-</pre>
-<div id="footer" class="footer" style="display: none;">
-    <div onclick="prevPage();"><</div>
-    <div onclick="bookmark();">SAVE</div>
-    <div onclick="nextPage();">></div>
+<div id="header" class="header">
+    <a id="close"><i class="icon icon-fanhui"></i></a>
+    <p id="bookName"></p>
+    <a id="save"><i class="icon icon-baocun"></i></a>
 </div>
-<div id="import" class="import" style="display: none;">
-    <input id="ibook" type="file" accept="text/plain">
-    导入书籍
+<pre id="bookWrapper"></pre>
+<div class="import-cover">
+    <div class="logo">
+        <span class="letter">R</span>
+        <span class="letter">e</span>
+        <span class="letter">a</span>
+        <span class="letter">d</span>
+        <span class="letter">e</span>
+        <span class="letter">r</span>
+    </div>
+    <div id="import" class="import">
+        <input id="ibook" type="file" accept="text/plain">
+        <i class="icon icon-daoru"></i>导入书籍
+    </div>
 </div>
-<div id="cover" class="cover" style="display: none;">请稍后...</div>
+<div class="tips-cover">
+    <div><span>向上翻页</span></div>
+    <div><span>呼出菜单</span></div>
+    <div><span>向下翻页</span></div>
+</div>
+<div id="footer" class="footer">
+    <div class="item" id="process">
+        <div class="il">进度</div>
+        <div class="ib">
+            <p class="process"><i id="processBar"></i><a id="processBtn"></a></p>
+        </div>
+        <div class="ir">
+            <a id="processText"></a>
+        </div>
+    </div>
+    <div class="item" id="setback">
+        <div class="il">背景</div>
+        <div class="ib">
+            <p class="back-set">
+                <i theme="Light" class="check"></i>
+                <i theme="Dark"></i>
+                <i theme="EyeCare"></i>
+                <i theme="Pink"></i>
+            </p>
+        </div>
+    </div>
+</div>
 </body>
 </html>
